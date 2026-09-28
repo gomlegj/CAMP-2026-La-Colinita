@@ -302,30 +302,52 @@ function listarFotos() {
     }
 
     var carpeta = DriveApp.getFolderById(CARPETA_ID);
-    var archivos = carpeta.getFiles();
     var fotos = [];
-
-    while (archivos.hasNext()) {
-      var archivo = archivos.next();
-      if (archivo.getMimeType().indexOf('image/') !== 0) continue;
-      fotos.push({
-        id: archivo.getId(),
-        creado: archivo.getDateCreated().toISOString(),
-        autor: archivo.getDescription() || ''
-      });
-    }
+    recolectarFotos(carpeta, fotos);
 
     fotos.sort(function (uno, otro) {
       return uno.creado < otro.creado ? 1 : uno.creado > otro.creado ? -1 : 0;
     });
 
     var salida = JSON.stringify({ ok: true, fotos: fotos });
-    cache.put(CLAVE_CACHE_FOTOS, salida, SEGUNDOS_CACHE);
+
+    // Con cientos de fotos, esta lista puede superar el limite de 100 KB por
+    // valor que tiene la cache de Apps Script. Que no se pueda guardar en
+    // cache no debe tumbar la respuesta: sin cache esta vez, la proxima
+    // peticion simplemente vuelve a leer Drive completo.
+    try {
+      cache.put(CLAVE_CACHE_FOTOS, salida, SEGUNDOS_CACHE);
+    } catch (errorCache) {
+      // Se ignora a proposito: ver comentario de arriba.
+    }
 
     return ContentService.createTextOutput(salida)
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return responder({ ok: false, error: 'fallo_servidor' });
+  }
+}
+
+/**
+ * Junta las fotos de una carpeta y, por si las hay organizadas asi, las de
+ * sus subcarpetas tambien (antes solo se miraba el nivel de arriba, y una
+ * carpeta con fotos guardadas en subcarpetas dejaba la mayoria sin listar).
+ */
+function recolectarFotos(carpeta, fotos) {
+  var archivos = carpeta.getFiles();
+  while (archivos.hasNext()) {
+    var archivo = archivos.next();
+    if (archivo.getMimeType().indexOf('image/') !== 0) continue;
+    fotos.push({
+      id: archivo.getId(),
+      creado: archivo.getDateCreated().toISOString(),
+      autor: archivo.getDescription() || ''
+    });
+  }
+
+  var subcarpetas = carpeta.getFolders();
+  while (subcarpetas.hasNext()) {
+    recolectarFotos(subcarpetas.next(), fotos);
   }
 }
 
