@@ -20,6 +20,15 @@
   gap: 0.1em;
 }
 
+/* La frase bajo el lema: misma linea visual, mucho mas pequena y sin mayusculas. */
+.portada__sublema {
+  font-family: var(--fuente-texto);
+  font-weight: 500;
+  font-size: var(--txt-titular);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
 .portada__marca {
   font-family: var(--fuente-texto);
   font-weight: 500;

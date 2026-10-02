@@ -16,12 +16,13 @@ function pintarPortada(contenedor, carta) {
 
   const lema = document.createElement("h1");
   lema.className = "portada__lema";
-  // Dos lineas, como en el boceto.
-  const primera = document.createElement("span");
-  primera.textContent = "Derramaré de mi";
-  const segunda = document.createElement("span");
-  segunda.textContent = "Espíritu";
-  lema.append(primera, segunda);
+  // El lema grande y, debajo, la frase que lo completa en letra menor.
+  const palabra = document.createElement("span");
+  palabra.textContent = "UNGIDOS";
+  const frase = document.createElement("span");
+  frase.className = "portada__sublema";
+  frase.textContent = "Por el poder del Espíritu Santo";
+  lema.append(palabra, frase);
 
   const marca = document.createElement("p");
   marca.className = "portada__marca";
