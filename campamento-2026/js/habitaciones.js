@@ -1,6 +1,6 @@
 // habitaciones.js — quien duerme donde.
 // Solo hay un buscador por cedula: al escribir la propia, se muestra una
-// tarjeta con la habitacion, el kit y el lider de esa persona. El listado
+// tarjeta con la habitacion y el kit de esa persona. El listado
 // completo de habitaciones no se ve en la pagina principal (para eso esta
 // el panel de administracion).
 
@@ -12,9 +12,8 @@ import { CONFIG } from "./config.js";
 /**
  * Encuentra a la persona con esa cedula (sin importar puntos ni espacios):
  * en que indice de habitaciones esta, el nombre de esa habitacion, sus
- * propios datos (nombre, cedula, kit) y el nombre del lider de su
- * habitacion. null si la busqueda esta vacia o no se encuentra a nadie.
- * Funcion pura.
+ * propios datos (nombre, cedula, kit). null si la busqueda esta vacia o no
+ * se encuentra a nadie. Funcion pura.
  */
 export function buscarPersonaPorCedula(habitaciones, consulta) {
   const buscado = normalizarCedula(consulta);
@@ -22,18 +21,11 @@ export function buscarPersonaPorCedula(habitaciones, consulta) {
 
   for (let indice = 0; indice < habitaciones.length; indice++) {
     const habitacion = habitaciones[indice];
-    const lider = habitacion?.lider;
-    const liderNombre = lider?.nombre || "";
-
-    if (lider?.cedula && normalizarCedula(lider.cedula) === buscado) {
-      return { habitacionIndice: indice, habitacionNombre: habitacion.nombre, persona: lider, liderNombre };
-    }
-
     const encontrada = (habitacion?.integrantes || []).find(
       (persona) => persona?.cedula && normalizarCedula(persona.cedula) === buscado
     );
     if (encontrada) {
-      return { habitacionIndice: indice, habitacionNombre: habitacion.nombre, persona: encontrada, liderNombre };
+      return { habitacionIndice: indice, habitacionNombre: habitacion.nombre, persona: encontrada };
     }
   }
 
@@ -143,8 +135,8 @@ function construirBuscador(habitaciones) {
   return { formulario, resultado };
 }
 
-/** La tarjeta de resultado del buscador: nombre propio, habitación, kit y líder. */
-function construirTarjetaPersona({ habitacionNombre, persona, liderNombre }) {
+/** La tarjeta de resultado del buscador: nombre propio, habitación y kit. */
+function construirTarjetaPersona({ habitacionNombre, persona }) {
   const tarjeta = document.createElement("div");
   tarjeta.className = "resultado-persona";
 
@@ -155,7 +147,6 @@ function construirTarjetaPersona({ habitacionNombre, persona, liderNombre }) {
 
   tarjeta.append(construirFilaResultado("Habitación:", habitacionNombre, true));
   if (persona.kit) tarjeta.append(construirFilaResultado("Kit asignado:", persona.kit));
-  if (liderNombre) tarjeta.append(construirFilaResultado("Nombre del líder:", liderNombre));
 
   return tarjeta;
 }

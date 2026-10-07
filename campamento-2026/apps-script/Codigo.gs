@@ -552,19 +552,21 @@ function configurarExperiencias() {
   Logger.log('Pestaña "Experiencias" creada.');
 }
 
-// El Excel de inscripciones (cedula, nombre, habitacion y lider de cada
-// asistente) vive en el Drive de quien corre importarAsistentes() — tiene
-// que ser una cuenta con acceso a ese archivo. El ID es el que aparece en
-// su URL: https://docs.google.com/spreadsheets/d/ESTE_ID/edit...
-var ID_EXCEL_ASISTENTES = '1W-erfXP50wSr5fGYT95kUiGwQyLTp8a4';
+// El Excel de inscripciones (cedula, nombre y habitacion de cada asistente)
+// vive en el Drive de quien corre importarAsistentes() — tiene que ser una
+// cuenta con acceso a ese archivo. El ID es el que aparece en su URL:
+// https://docs.google.com/spreadsheets/d/ESTE_ID/edit...
+var ID_EXCEL_ASISTENTES = '1xjXqvxPsCPRno84FrZIzp5lKMu650cLwsgt_3VFHuBw';
 
 /**
  * Corre esto UNA SOLA VEZ (o cada vez que el Excel de inscripciones cambie)
  * desde el editor de Apps Script, con una cuenta que tenga acceso a ese
- * Excel. Lee la primera pestaña del Excel — debe tener las columnas "#"
- * (se guarda como numero de kit), "CEDULA", "NOMBRE COMPLETO", "HABITACION"
- * y "LIDER HABITACION" — agrupa a la gente por habitacion y REEMPLAZA POR
- * COMPLETO las pestañas Habitaciones e Integrantes del panel con eso.
+ * Excel. Lee la primera pestaña del Excel — columnas obligatorias "CEDULA",
+ * "NOMBRE" (o "NOMBRE COMPLETO") y "HABITACION"; opcional "#" (o "KIT", se
+ * guarda como numero de kit); da igual si llevan tildes o minusculas — agrupa
+ * a la gente por habitacion y REEMPLAZA POR COMPLETO las pestañas
+ * Habitaciones e Integrantes del panel con eso. Las habitaciones no tienen
+ * lider: todos quedan como integrantes.
  *
  * A quien no tiene una habitacion real asignada (la celda esta vacia, dice
  * "NO VA" o "1 DIA") se le deja por fuera: no apareceria en ninguna
@@ -576,14 +578,24 @@ function importarAsistentes() {
   var valores = origen.getDataRange().getValues();
   if (valores.length < 2) throw new Error('El Excel de asistentes esta vacio.');
 
-  var encabezados = valores[0].map(function (e) { return String(e).trim().toUpperCase(); });
-  var colKit = encabezados.indexOf('#');
-  var colCedula = encabezados.indexOf('CEDULA');
-  var colNombre = encabezados.indexOf('NOMBRE COMPLETO');
-  var colHabitacion = encabezados.indexOf('HABITACION');
-  var colLider = encabezados.indexOf('LIDER HABITACION');
+  // Sin tildes y en mayusculas: "Habitación" y "HABITACION" son la misma columna.
+  var encabezados = valores[0].map(function (e) {
+    return String(e).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+  });
+  // Cada columna acepta varios nombres; gana el primero que exista.
+  function columna(nombres) {
+    for (var i = 0; i < nombres.length; i++) {
+      var posicion = encabezados.indexOf(nombres[i]);
+      if (posicion !== -1) return posicion;
+    }
+    return -1;
+  }
+  var colKit = columna(['#', 'KIT']);
+  var colCedula = columna(['CEDULA']);
+  var colNombre = columna(['NOMBRE COMPLETO', 'NOMBRE']);
+  var colHabitacion = columna(['HABITACION']);
   if (colCedula === -1 || colNombre === -1 || colHabitacion === -1) {
-    throw new Error('No se encontraron las columnas esperadas (CEDULA, NOMBRE COMPLETO, HABITACION) en la primera fila del Excel.');
+    throw new Error('No se encontraron las columnas esperadas (CEDULA, NOMBRE, HABITACION) en la primera fila del Excel.');
   }
 
   // Estos valores en la columna HABITACION no son una habitacion real.
@@ -604,64 +616,28 @@ function importarAsistentes() {
       cedula: cedula,
       nombre: nombre,
       kit: colKit === -1 ? '' : String(fila[colKit] || '').trim(),
-      habitacion: esValida ? habitacionCruda : '',
-      lider: esValida && colLider !== -1 ? String(fila[colLider] || '').trim() : ''
+      habitacion: esValida ? habitacionCruda : ''
     };
   }
 
   // Segunda pasada: agrupar por habitacion.
   var porHabitacion = {};
-  var ordenHabitaciones = [];
   Object.keys(porCedula).forEach(function (cedula) {
     var persona = porCedula[cedula];
     if (!persona.habitacion) return;
-    if (!porHabitacion[persona.habitacion]) {
-      porHabitacion[persona.habitacion] = { liderNombre: '', personas: [] };
-      ordenHabitaciones.push(persona.habitacion);
-    }
-    porHabitacion[persona.habitacion].personas.push(persona);
-    if (!porHabitacion[persona.habitacion].liderNombre && persona.lider) {
-      porHabitacion[persona.habitacion].liderNombre = persona.lider;
-    }
+    if (!porHabitacion[persona.habitacion]) porHabitacion[persona.habitacion] = [];
+    porHabitacion[persona.habitacion].push({ nombre: persona.nombre, cedula: persona.cedula, kit: persona.kit });
   });
 
-  // El lider de cada habitacion tambien esta en la lista de sus personas
-  // (el Excel lo incluye como un asistente mas): se separa del resto para
-  // no mostrarlo dos veces.
-  var avisos = [];
-  var datos = ordenHabitaciones.sort().map(function (nombreHabitacion) {
-    var grupo = porHabitacion[nombreHabitacion];
-    var liderNormalizado = grupo.liderNombre.trim().toLowerCase();
-    var indiceLider = -1;
-    grupo.personas.forEach(function (p, i) {
-      if (indiceLider === -1 && p.nombre.trim().toLowerCase() === liderNormalizado) indiceLider = i;
-    });
-
-    var lider, integrantes;
-    if (indiceLider === -1) {
-      avisos.push('"' + nombreHabitacion + '": no se encontro a "' + grupo.liderNombre + '" entre sus propios integrantes.');
-      lider = { nombre: grupo.liderNombre, cedula: '', kit: '' };
-      integrantes = grupo.personas;
-    } else {
-      lider = grupo.personas[indiceLider];
-      integrantes = grupo.personas.filter(function (_, i) { return i !== indiceLider; });
-    }
-
-    return {
-      nombre: nombreHabitacion,
-      lider: { nombre: lider.nombre, cedula: lider.cedula, kit: lider.kit },
-      integrantes: integrantes.map(function (p) { return { nombre: p.nombre, cedula: p.cedula, kit: p.kit }; })
-    };
+  var datos = Object.keys(porHabitacion).sort().map(function (nombreHabitacion) {
+    return { nombre: nombreHabitacion, integrantes: porHabitacion[nombreHabitacion] };
   });
 
   escribirHabitacionesEnHoja(obtenerHoja(), datos);
   CacheService.getScriptCache().remove('datos_habitaciones');
 
-  var totalPersonas = datos.reduce(function (total, h) { return total + 1 + h.integrantes.length; }, 0);
+  var totalPersonas = datos.reduce(function (total, h) { return total + h.integrantes.length; }, 0);
   Logger.log(datos.length + ' habitaciones creadas, ' + totalPersonas + ' personas asignadas.');
-  if (avisos.length > 0) {
-    Logger.log('Avisos (revisar a mano):\n' + avisos.join('\n'));
-  }
 }
 
 /**

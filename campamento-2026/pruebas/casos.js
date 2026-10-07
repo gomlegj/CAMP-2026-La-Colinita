@@ -139,7 +139,6 @@ export const casos = [
       const habitaciones = [
         {
           nombre: "Habitación 1",
-          lider: { nombre: "Ana", cedula: "1000000001", kit: "1" },
           integrantes: [
             { nombre: "Luis", cedula: "1000000002", kit: "2" },
             { nombre: "Sara", cedula: "1000000003", kit: "3" },
@@ -147,7 +146,6 @@ export const casos = [
         },
         {
           nombre: "Habitación 2",
-          lider: { nombre: "María José", cedula: "1000000004", kit: "4" },
           integrantes: [{ nombre: "Andrés", cedula: "1.000.000.005", kit: "5" }],
         },
       ];
@@ -155,23 +153,10 @@ export const casos = [
       igual(andres.habitacionIndice, 1, "Deberia encontrar a Andrés sin los puntos");
       igual(andres.habitacionNombre, "Habitación 2", "Deberia traer el nombre de su habitacion");
       igual(andres.persona.nombre, "Andrés", "Deberia traer los datos de la persona encontrada");
-      igual(andres.liderNombre, "María José", "Deberia traer el nombre del lider de esa habitacion");
+      igual(Object.keys(andres).sort(), ["habitacionIndice", "habitacionNombre", "persona"], "Ya no hay lider en el resultado");
 
       const sara = buscarPersonaPorCedula(habitaciones, "1.000.000.003");
       igual(sara.habitacionIndice, 0, "Deberia encontrar a Sara aunque se busque con puntos");
-    },
-  },
-  {
-    nombre: "buscarPersonaPorCedula tambien busca por la cedula del lider",
-    entorno: "ambos",
-    ejecutar() {
-      const habitaciones = [
-        { nombre: "Habitación 1", lider: { nombre: "María José", cedula: "1000000009", kit: "1" }, integrantes: [] },
-      ];
-      const encontrada = buscarPersonaPorCedula(habitaciones, "1000000009");
-      igual(encontrada.habitacionIndice, 0, "Deberia encontrar al lider por su cedula");
-      igual(encontrada.persona.nombre, "María José", "La persona encontrada deberia ser el propio lider");
-      igual(encontrada.liderNombre, "María José", "El lider de su propia habitacion es ella misma");
     },
   },
   {
@@ -181,7 +166,6 @@ export const casos = [
       const habitaciones = [
         {
           nombre: "Habitación 1",
-          lider: { nombre: "Ana", cedula: "1000000001", kit: "1" },
           integrantes: [{ nombre: "Luis", cedula: "1000000002", kit: "2" }],
         },
       ];
@@ -533,14 +517,10 @@ export const casos = [
     nombre: "agregarHabitacion añade una habitacion vacia al final",
     entorno: "ambos",
     ejecutar() {
-      const original = { nombre: "Habitación 1", lider: { nombre: "", cedula: "", kit: "" }, integrantes: [] };
+      const original = { nombre: "Habitación 1", integrantes: [] };
       const resultado = agregarHabitacion([original]);
       igual(resultado.length, 2, "Deberia haber dos habitaciones");
-      igual(
-        resultado[1],
-        { nombre: "", lider: { nombre: "", cedula: "", kit: "" }, integrantes: [] },
-        "La nueva deberia estar vacia, con el lider como objeto vacio"
-      );
+      igual(resultado[1], { nombre: "", integrantes: [] }, "La nueva deberia estar vacia y sin lider");
       igual(resultado[0].nombre, "Habitación 1", "La primera no deberia cambiar");
     },
   },
@@ -559,7 +539,7 @@ export const casos = [
     entorno: "ambos",
     ejecutar() {
       const ana = { nombre: "Ana", cedula: "1", kit: "1" };
-      const habitacion = { nombre: "H1", lider: { nombre: "", cedula: "", kit: "" }, integrantes: [ana] };
+      const habitacion = { nombre: "H1", integrantes: [ana] };
       const resultado = agregarIntegrante(habitacion);
       igual(
         resultado.integrantes,
@@ -575,7 +555,6 @@ export const casos = [
     ejecutar() {
       const habitacion = {
         nombre: "H1",
-        lider: { nombre: "", cedula: "", kit: "" },
         integrantes: [
           { nombre: "Ana", cedula: "1", kit: "1" },
           { nombre: "Luis", cedula: "2", kit: "2" },

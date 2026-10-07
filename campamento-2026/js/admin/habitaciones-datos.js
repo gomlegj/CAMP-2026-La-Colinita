@@ -2,7 +2,7 @@
 
 /** Agrega una habitacion vacia al final. No muta el arreglo recibido. */
 export function agregarHabitacion(habitaciones) {
-  return [...habitaciones, { nombre: "", lider: { nombre: "", cedula: "", kit: "" }, integrantes: [] }];
+  return [...habitaciones, { nombre: "", integrantes: [] }];
 }
 
 /** Quita la habitacion en `indice`. No muta el arreglo recibido. */

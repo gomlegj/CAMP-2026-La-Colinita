@@ -37,7 +37,7 @@ export async function iniciar(contenedor, clave) {
     });
   }
 
-  /** Fila con nombre + cedula + kit, para el lider o para un integrante. */
+  /** Fila con nombre + cedula + kit de un integrante. */
   function construirFilaPersona(persona, alCambiar, alQuitar) {
     const fila = document.createElement("div");
     fila.className = "panel-fila";
@@ -92,14 +92,6 @@ export async function iniciar(contenedor, clave) {
       habitaciones[indice] = { ...habitaciones[indice], nombre: campoNombre.value };
     });
 
-    const etiquetaLider = document.createElement("p");
-    etiquetaLider.className = "panel-etiqueta";
-    etiquetaLider.textContent = "Líder de la habitación";
-
-    const filaLider = construirFilaPersona(habitacion.lider || { nombre: "", cedula: "", kit: "" }, (nuevoLider) => {
-      habitaciones[indice] = { ...habitaciones[indice], lider: nuevoLider };
-    });
-
     const etiquetaIntegrantes = document.createElement("p");
     etiquetaIntegrantes.className = "panel-etiqueta";
     etiquetaIntegrantes.textContent = "Integrantes";
@@ -147,8 +139,6 @@ export async function iniciar(contenedor, clave) {
 
     tarjeta.append(
       campoNombre,
-      etiquetaLider,
-      filaLider,
       etiquetaIntegrantes,
       listaIntegrantes,
       agregarIntegranteBoton,
