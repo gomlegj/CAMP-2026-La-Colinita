@@ -28,11 +28,11 @@ function construirMarcas() {
   bloque.className = "pie__marcas";
 
   // Una sola imagen con todo: logo de la iglesia, separador, logo de
-  // TRASCIENDE y "Jóvenes La Colinita" — así la entregó el liderazgo.
+  // UNGIDOS y "Jóvenes La Colinita" (ver img/LEEME.md).
   const marcas = document.createElement("img");
   marcas.className = "pie__logo-marcas";
   marcas.src = "img/logo-pie.png";
-  marcas.alt = "Iglesia Pentecostal Unida de Colombia — TRASCIENDE, Jóvenes La Colinita";
+  marcas.alt = "Iglesia Pentecostal Unida de Colombia — UNGIDOS, Jóvenes La Colinita";
   // Si el archivo definitivo aun no esta, no se deja un icono roto en pantalla.
   marcas.addEventListener("error", () => marcas.remove());
 

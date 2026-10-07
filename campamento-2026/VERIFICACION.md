@@ -11,7 +11,7 @@
 - [ ] `datos/canciones.json` — canciones adicionales del libro
       (o cargarlas desde el panel de administración)
 - [x] `datos/locacion.json` — punto exacto de la finca en Google Maps y en Waze
-- [x] `img/logo-pie.png` — logo de la iglesia + TRASCIENDE, recoloreado a vino
+- [x] `img/logo-pie.png` — logo de la iglesia + UNGIDOS + "Jóvenes La Colinita", en vino
 - [x] `js/config.js` — URL `/exec` del Apps Script publicado
 - [ ] Confirmar con el liderazgo las dos actividades del sábado a las 8:00 PM
       («Cena» y «Noche de alabanza» aparecen a la misma hora en el boceto)

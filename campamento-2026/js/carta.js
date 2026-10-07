@@ -79,7 +79,7 @@ function construirSobre(carta) {
 
   const sello = document.createElement("span");
   sello.className = "sobre__sello";
-  sello.textContent = "TRASCIENDE";
+  sello.textContent = "UNGIDOS";
 
   cuerpo.append(pliegue, sello);
   interior.append(vista, cuerpo);
@@ -95,7 +95,12 @@ function construirSobre(carta) {
   titulo.textContent = carta.titulo || "Carta para ti";
   hoja.append(titulo);
 
+  // Cada parrafo es texto, o { cita, referencia } para un versiculo destacado.
   for (const parrafo of carta.parrafos || []) {
+    if (parrafo && typeof parrafo === "object") {
+      hoja.append(construirCita(parrafo));
+      continue;
+    }
     const p = document.createElement("p");
     p.textContent = parrafo;
     hoja.append(p);
@@ -121,5 +126,24 @@ function construirSobre(carta) {
   });
 
   bloque.append(boton, hoja);
+  return bloque;
+}
+
+/** Versiculo destacado de la carta: la cita en negrita y, debajo, su referencia. */
+function construirCita({ cita, referencia }) {
+  const bloque = document.createElement("blockquote");
+  bloque.className = "sobre__cita";
+
+  const texto = document.createElement("p");
+  texto.className = "sobre__cita-texto";
+  texto.textContent = cita || "";
+  bloque.append(texto);
+
+  if (referencia) {
+    const pie = document.createElement("p");
+    pie.className = "sobre__cita-referencia";
+    pie.textContent = `— ${referencia}`;
+    bloque.append(pie);
+  }
   return bloque;
 }
