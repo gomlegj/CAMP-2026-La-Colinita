@@ -51,7 +51,13 @@ export async function llamarApi(accion, datos, clave, traer = fetch) {
     throw new Error("sin_conexion");
   }
   if (!respuesta.ok) throw new Error("fallo_servidor");
-  const cuerpo = await respuesta.json();
+  let cuerpo;
+  try {
+    cuerpo = await respuesta.json();
+  } catch {
+    // Google a veces devuelve una pagina de error HTML en vez del JSON del script.
+    throw new Error("fallo_servidor");
+  }
   if (!cuerpo.ok) throw new Error(cuerpo.error || "fallo_servidor");
   return cuerpo;
 }

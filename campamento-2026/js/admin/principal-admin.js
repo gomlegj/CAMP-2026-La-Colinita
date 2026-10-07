@@ -6,15 +6,21 @@ async function iniciarPanel() {
   const contenedorClave = document.querySelector("#admin-clave");
   const contenedorSecciones = document.querySelector("#admin-secciones");
 
+  /**
+   * Verifica la clave y, si es valida, monta el panel. Devuelve null si entro,
+   * o el codigo del problema: "clave_incorrecta" solo cuando el servidor lo
+   * dice; cualquier otro fallo (red, pagina de error de Google) es otro codigo.
+   */
   async function intentarConClave(clave) {
     try {
       await llamarApi("verificarClave", null, clave);
-      guardarClaveSesion(clave);
-      await montarSecciones(clave);
-      return true;
     } catch (error) {
-      return false;
+      return error.message;
     }
+    guardarClaveSesion(clave);
+    // La clave ya es valida: un fallo al montar un panel no es culpa de la clave.
+    await montarSecciones(clave).catch((error) => console.error("No se pudo montar el panel:", error));
+    return null;
   }
 
   async function montarSecciones(clave) {
@@ -52,17 +58,19 @@ async function iniciarPanel() {
   formulario.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     errorClave.textContent = "Verificando…";
-    const exito = await intentarConClave(campoClave.value);
-    if (!exito) {
+    const problema = await intentarConClave(campoClave.value);
+    if (problema === "clave_incorrecta") {
       errorClave.textContent = "Contraseña incorrecta.";
       borrarClaveSesion();
+    } else if (problema) {
+      errorClave.textContent = "No pudimos conectar con el servidor. Inténtalo de nuevo en un momento.";
     }
   });
 
   const claveGuardada = obtenerClaveSesion();
   if (claveGuardada) {
-    const exito = await intentarConClave(claveGuardada);
-    if (!exito) borrarClaveSesion();
+    const problema = await intentarConClave(claveGuardada);
+    if (problema === "clave_incorrecta") borrarClaveSesion();
   }
 }
 
