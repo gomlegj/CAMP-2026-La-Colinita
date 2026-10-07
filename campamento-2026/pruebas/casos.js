@@ -13,6 +13,7 @@ import { calcularMedidas, comprimir, validarArchivo, LADO_MAXIMO } from "../js/i
 import { conReintento } from "../js/util/red.js";
 import { cargarConRespaldo, traerDatoVivo } from "../js/util/datosVivos.js";
 import { llamarApi, mensajeDeErrorAdmin } from "../js/admin/clave.js";
+import { urlReproductor, VIDEO_ID } from "../js/musica.js";
 import {
   agregarHabitacion,
   quitarHabitacion,
@@ -494,6 +495,71 @@ export const casos = [
         "Un fallo de red deberia lanzar sin_conexion"
       );
       igual(error.message, "sin_conexion", "Deberia normalizar el error de red");
+    },
+  },
+  {
+    nombre: "sw.js guarda para uso sin conexion todos los archivos publicos, y solo archivos que existen",
+    entorno: "node",
+    async ejecutar() {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const { fileURLToPath } = await import("node:url");
+      const raiz = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+      const codigo = fs.readFileSync(path.join(raiz, "sw.js"), "utf8");
+      const bloque = codigo.match(/const ARCHIVOS = \[([\s\S]*?)\];/);
+      cierto(bloque, "sw.js deberia declarar const ARCHIVOS = [...]");
+      const listados = [...bloque[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+
+      for (const archivo of listados) {
+        if (archivo === "./") continue;
+        cierto(fs.existsSync(path.join(raiz, archivo)), `"${archivo}" esta en ARCHIVOS pero no existe`);
+      }
+
+      // Todo lo que necesita la pagina publica (no el panel ni las pruebas).
+      const esperados = [];
+      const recorrer = (carpeta) => {
+        for (const nombre of fs.readdirSync(path.join(raiz, carpeta))) {
+          const relativo = `${carpeta}/${nombre}`;
+          if (fs.statSync(path.join(raiz, relativo)).isDirectory()) {
+            if (relativo !== "js/admin") recorrer(relativo);
+          } else if (/\.(js|css|json|woff2|png)$/.test(nombre) && relativo !== "css/admin.css") {
+            esperados.push(relativo);
+          }
+        }
+      };
+      ["js", "css", "datos", "fuentes", "img"].forEach(recorrer);
+      for (const archivo of esperados) {
+        cierto(listados.includes(archivo), `Falta "${archivo}" en ARCHIVOS de sw.js`);
+      }
+      cierto(listados.includes("index.html"), "Falta index.html en ARCHIVOS de sw.js");
+    },
+  },
+  {
+    nombre: "urlReproductor usa YouTube sin cookies y arranca al abrir",
+    entorno: "ambos",
+    ejecutar() {
+      const url = new URL(urlReproductor());
+      igual(url.origin, "https://www.youtube-nocookie.com", "Deberia usar el modo de privacidad mejorada");
+      igual(url.pathname, `/embed/${VIDEO_ID}`, "Deberia embeber el video de la cancion lema");
+      igual(url.searchParams.get("autoplay"), "1", "Deberia sonar al abrir el panel");
+      igual(url.searchParams.get("playsinline"), "1", "En iPhone no deberia saltar a pantalla completa");
+    },
+  },
+  {
+    nombre: "llamarApi lanza fallo_servidor si la respuesta no es JSON",
+    entorno: "ambos",
+    async ejecutar() {
+      // Google a veces responde con una pagina de error HTML en vez del JSON del script.
+      const traerFalso = async () => ({
+        ok: true,
+        status: 200,
+        json: async () => { throw new SyntaxError("Unexpected token '<'"); },
+      });
+      const error = await lanza(
+        () => llamarApi("verificarClave", null, "clave-1", traerFalso),
+        "Una respuesta que no es JSON deberia lanzar"
+      );
+      igual(error.message, "fallo_servidor", "No deberia confundirse con clave_incorrecta");
     },
   },
   {

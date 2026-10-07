@@ -2,3 +2,10 @@
 [build]
   publish = "."
   command = ""
+
+# El navegador debe pedir siempre la version mas reciente del service worker;
+# si lo guardara en cache HTTP, tardaria en enterarse de los despliegues nuevos.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

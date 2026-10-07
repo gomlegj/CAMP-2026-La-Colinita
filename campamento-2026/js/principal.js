@@ -12,7 +12,16 @@ const secciones = [
   ["#fotos", () => import("./galeria.js")],
   ["#pie", () => import("./pie.js")],
   ["#navegacion", () => import("./navegacion.js")],
+  ["#musica", () => import("./musica.js")],
 ];
+
+// Guarda la pagina para abrirla sin señal (ver sw.js). Si el navegador no lo
+// soporta o falla el registro, la pagina funciona igual que siempre.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("sw.js")
+    .catch((error) => console.error("No se pudo activar el modo sin conexion:", error));
+}
 
 for (const [selector, traerModulo] of secciones) {
   const contenedor = document.querySelector(selector);
