@@ -13,7 +13,7 @@ import { calcularMedidas, comprimir, validarArchivo, LADO_MAXIMO } from "../js/i
 import { conReintento } from "../js/util/red.js";
 import { cargarConRespaldo, traerDatoVivo } from "../js/util/datosVivos.js";
 import { llamarApi, mensajeDeErrorAdmin } from "../js/admin/clave.js";
-import { urlReproductor, VIDEO_ID } from "../js/musica.js";
+import { urlReproductor, VIDEO_ID, debeAbrirseSola, recordarCerrada } from "../js/musica.js";
 import {
   agregarHabitacion,
   quitarHabitacion,
@@ -532,6 +532,27 @@ export const casos = [
         cierto(listados.includes(archivo), `Falta "${archivo}" en ARCHIVOS de sw.js`);
       }
       cierto(listados.includes("index.html"), "Falta index.html en ARCHIVOS de sw.js");
+    },
+  },
+  {
+    nombre: "la musica arranca sola salvo que la persona la haya cerrado",
+    entorno: "ambos",
+    ejecutar() {
+      const datos = {};
+      const almacen = {
+        getItem: (clave) => (clave in datos ? datos[clave] : null),
+        setItem: (clave, valor) => { datos[clave] = String(valor); },
+        removeItem: (clave) => { delete datos[clave]; },
+      };
+      igual(debeAbrirseSola(almacen), true, "Sin preferencia guardada deberia arrancar sola");
+      recordarCerrada(true, almacen);
+      igual(debeAbrirseSola(almacen), false, "Si la cerro, no deberia volver a abrirse sola");
+      recordarCerrada(false, almacen);
+      igual(debeAbrirseSola(almacen), true, "Si la vuelve a abrir, vuelve el arranque automatico");
+
+      const bloqueado = { getItem() { throw new Error("bloqueado"); }, setItem() { throw new Error("bloqueado"); } };
+      igual(debeAbrirseSola(bloqueado), true, "Con el almacenamiento bloqueado no deberia reventar");
+      recordarCerrada(true, bloqueado);
     },
   },
   {

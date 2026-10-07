@@ -3,11 +3,35 @@
 // No se descarga ni se aloja el audio: suena desde YouTube, embebido. Sus
 // politicas no permiten un reproductor oculto que solo suene de fondo, asi que
 // mientras suena el recuadro siempre esta a la vista; cerrarlo quita el
-// reproductor y detiene la musica. Nada de YouTube se carga hasta que la
-// persona toca el boton.
+// reproductor y detiene la musica.
+//
+// Ningun navegador deja sonar audio al abrir la pagina sin que la persona
+// haya tocado algo. Lo mas cercano: el reproductor se abre con el primer
+// toque o tecla en cualquier parte. Si la persona lo cierra, se recuerda en
+// su telefono y no vuelve a abrirse solo hasta que toque el boton otra vez.
 
 export const VIDEO_ID = "lkhZ5ndtcpQ";
 const TITULO = "Yo navegaré — Jose Realpe (cover)";
+const CLAVE_CERRADA = "ungidos:musica-cerrada";
+
+/** true si la musica debe abrirse sola con el primer toque. */
+export function debeAbrirseSola(almacen = globalThis.localStorage) {
+  try {
+    return almacen?.getItem(CLAVE_CERRADA) !== "1";
+  } catch {
+    return true;
+  }
+}
+
+/** Guarda si la persona cerro la musica (true) o la volvio a abrir (false). */
+export function recordarCerrada(cerrada, almacen = globalThis.localStorage) {
+  try {
+    if (cerrada) almacen?.setItem(CLAVE_CERRADA, "1");
+    else almacen?.removeItem(CLAVE_CERRADA);
+  } catch {
+    // Almacenamiento bloqueado: solo se pierde el recuerdo de la preferencia.
+  }
+}
 
 /** URL del reproductor en modo de privacidad mejorada, arrancando al abrirlo. */
 export function urlReproductor(videoId = VIDEO_ID) {
@@ -43,7 +67,10 @@ export function iniciar(contenedor) {
   marco.className = "musica__marco";
   panel.append(cabecera, marco);
 
-  function abrir() {
+  // `desdeBoton`: la persona lo pidio; si se abre solo, no se le roba el foco.
+  function abrir(desdeBoton) {
+    dejarDeEsperarToque();
+    if (!panel.hidden) return;
     const reproductor = document.createElement("iframe");
     reproductor.className = "musica__reproductor";
     reproductor.src = urlReproductor();
@@ -54,10 +81,14 @@ export function iniciar(contenedor) {
     panel.hidden = false;
     boton.hidden = true;
     boton.setAttribute("aria-expanded", "true");
-    cerrar.focus();
+    if (desdeBoton) {
+      recordarCerrada(false);
+      cerrar.focus();
+    }
   }
 
   function cerrarPanel() {
+    recordarCerrada(true);
     // Quitar el iframe es lo que detiene la musica.
     marco.replaceChildren();
     panel.hidden = true;
@@ -66,8 +97,24 @@ export function iniciar(contenedor) {
     boton.focus();
   }
 
-  boton.addEventListener("click", abrir);
+  // click y keydown son los eventos que el navegador acepta como permiso
+  // para reproducir con sonido (deslizar la pantalla no cuenta).
+  const EVENTOS_DE_TOQUE = ["click", "keydown"];
+  function alPrimerToque(evento) {
+    // Los botones del propio reproductor ya hacen lo suyo.
+    if (contenedor.contains(evento.target)) return;
+    abrir(false);
+  }
+  function dejarDeEsperarToque() {
+    EVENTOS_DE_TOQUE.forEach((tipo) => document.removeEventListener(tipo, alPrimerToque, true));
+  }
+
+  boton.addEventListener("click", () => abrir(true));
   cerrar.addEventListener("click", cerrarPanel);
 
   contenedor.append(boton, panel);
+
+  if (debeAbrirseSola()) {
+    EVENTOS_DE_TOQUE.forEach((tipo) => document.addEventListener(tipo, alPrimerToque, true));
+  }
 }

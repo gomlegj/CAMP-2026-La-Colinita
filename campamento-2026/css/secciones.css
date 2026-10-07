@@ -1075,10 +1075,11 @@
 
 /* ---------- Musica: cancion lema (reproductor de YouTube flotante) ---------- */
 
-/* Por debajo del visor de fotos (60) y por encima de la navegacion (40). */
+/* Abajo a la izquierda: a la derecha va el aviso de Netlify. Por debajo del
+   visor de fotos (60) y por encima de la navegacion (40). */
 .musica {
   position: fixed;
-  right: max(var(--esp-3), env(safe-area-inset-right, 0));
+  left: max(var(--esp-3), env(safe-area-inset-left, 0));
   bottom: max(var(--esp-3), env(safe-area-inset-bottom, 0));
   z-index: 50;
 }
