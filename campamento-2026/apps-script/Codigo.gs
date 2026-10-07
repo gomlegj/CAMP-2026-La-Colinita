@@ -24,7 +24,7 @@
  * y actualiza js/config.js. La URL anterior queda muerta.
  */
 
-var CARPETA_ID = '1p-ykfs2etU-lzjuuQkesMDApvR9PC0Tb';
+var CARPETA_ID = '12r0IFYZM4EHCdyQkpIKN4qC_ZySQENWL';
 var MAXIMO_BYTES = 10 * 1024 * 1024;
 var CLAVE_CACHE_FOTOS = 'listado_fotos';
 var SEGUNDOS_CACHE = 60;
@@ -337,6 +337,8 @@ function recolectarFotos(carpeta, fotos) {
   var archivos = carpeta.getFiles();
   while (archivos.hasNext()) {
     var archivo = archivos.next();
+    // getFiles() tambien trae lo que esta en la papelera de la carpeta.
+    if (archivo.isTrashed()) continue;
     if (archivo.getMimeType().indexOf('image/') !== 0) continue;
     fotos.push({
       id: archivo.getId(),
