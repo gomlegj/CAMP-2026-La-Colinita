@@ -46,6 +46,12 @@
   --crema: #fef9dd;
   --hueso: #fbf8f3;
 
+  /* Acento UNGIDOS: dorado brasa, solo sobre fondo vino (sobre vino da ~7.5:1;
+     sobre hueso no se lee bien, ahi los adornos van en vino). Usar poco. */
+  --brasa: #e8a33d;
+  --brasa-velo: rgba(232, 163, 61, 0.35);
+  --vino-hondo: #3a0710;
+
   /* Grises neutros, unicamente para sombras y veladuras. */
   --sombra-tarjeta: 0 0.25rem 1rem rgba(0, 0, 0, 0.14);
   --sombra-flotante: 0 -0.125rem 0.75rem rgba(0, 0, 0, 0.18);

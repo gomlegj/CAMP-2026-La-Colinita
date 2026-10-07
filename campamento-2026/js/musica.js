@@ -45,7 +45,7 @@ export function iniciar(contenedor) {
   boton.className = "musica__boton";
   boton.setAttribute("aria-label", "Escuchar la canción lema");
   boton.setAttribute("aria-expanded", "false");
-  boton.textContent = "🎵";
+  boton.append(crearIconoNota());
 
   const panel = document.createElement("div");
   panel.className = "musica__panel";
@@ -117,4 +117,18 @@ export function iniciar(contenedor) {
   if (debeAbrirseSola()) {
     EVENTOS_DE_TOQUE.forEach((tipo) => document.addEventListener(tipo, alPrimerToque, true));
   }
+}
+
+/** Nota musical en SVG: el emoji cambia de color y forma segun el telefono. */
+function crearIconoNota() {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("class", "musica__icono");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  const trazo = document.createElementNS(ns, "path");
+  trazo.setAttribute("d", "M9 18.5a3 3 0 1 1-2-2.83V5.6l12-2.6v12.5a3 3 0 1 1-2-2.83V6.1l-8 1.73V18.5Z");
+  svg.append(trazo);
+  return svg;
 }
