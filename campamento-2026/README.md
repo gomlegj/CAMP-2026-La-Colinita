@@ -1,4 +1,4 @@
-# Sitio del Campamento Itagüí 2026
+# Sitio del Campamento La Colinita 2026
 
 Sitio estático. No hay nada que compilar: publicar es copiar esta carpeta.
 
